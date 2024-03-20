@@ -38,7 +38,8 @@
       url = grammar.source.git;
       rev = grammar.source.rev;
       ref = grammar.source.ref or "HEAD";
-      shallow = true;
+      shallow = false;
+      allRefs = true;
     };
   in
     stdenv.mkDerivation {
