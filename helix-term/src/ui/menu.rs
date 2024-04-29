@@ -1,11 +1,11 @@
-use std::{borrow::Cow, cmp::Reverse, path::PathBuf};
+use std::{borrow::Cow, cmp::Reverse};
 
 use crate::{
     compositor::{Callback, Component, Compositor, Context, Event, EventResult},
     ctrl, key, shift,
 };
 use helix_core::fuzzy::MATCHER;
-use nucleo::pattern::{Atom, AtomKind, CaseMatching};
+use nucleo::pattern::{Atom, AtomKind, CaseMatching, Normalization};
 use nucleo::{Config, Utf32Str};
 use tui::{
     buffer::Buffer as Surface,
@@ -35,18 +35,6 @@ pub trait Item: Sync + Send + 'static {
     fn filter_text(&self, data: &Self::Data) -> Cow<str> {
         let label: String = self.format(data).cell_text().collect();
         label.into()
-    }
-}
-
-impl Item for PathBuf {
-    /// Root prefix to strip.
-    type Data = PathBuf;
-
-    fn format(&self, root_path: &Self::Data) -> Row {
-        self.strip_prefix(root_path)
-            .unwrap_or(self)
-            .to_string_lossy()
-            .into()
     }
 }
 
@@ -99,7 +87,13 @@ impl<T: Item> Menu<T> {
     pub fn score(&mut self, pattern: &str, incremental: bool) {
         let mut matcher = MATCHER.lock();
         matcher.config = Config::DEFAULT;
-        let pattern = Atom::new(pattern, CaseMatching::Ignore, AtomKind::Fuzzy, false);
+        let pattern = Atom::new(
+            pattern,
+            CaseMatching::Ignore,
+            Normalization::Smart,
+            AtomKind::Fuzzy,
+            false,
+        );
         let mut buf = Vec::new();
         if incremental {
             self.matches.retain_mut(|(index, score)| {
@@ -241,9 +235,9 @@ impl<T: Item> Menu<T> {
 }
 
 impl<T: Item + PartialEq> Menu<T> {
-    pub fn replace_option(&mut self, old_option: T, new_option: T) {
+    pub fn replace_option(&mut self, old_option: &T, new_option: T) {
         for option in &mut self.options {
-            if old_option == *option {
+            if old_option == option {
                 *option = new_option;
                 break;
             }

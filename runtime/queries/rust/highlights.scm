@@ -51,7 +51,7 @@
 (lifetime
   "'" @label
   (identifier) @label)
-(loop_label
+(label
   "'" @label
   (identifier) @label)
 
@@ -376,7 +376,8 @@
 (use_wildcard
   (identifier) @namespace)
 (extern_crate_declaration
-  name: (identifier) @namespace)
+  name: (identifier) @namespace
+  alias: (identifier)? @namespace)
 (mod_item
   name: (identifier) @namespace)
 (scoped_use_list
